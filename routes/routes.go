@@ -14,13 +14,13 @@ func Init() *echo.Echo {
 	e.Use(middleware.CORSWithConfig(middleware.DefaultCORSConfig))
 
 	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Project-NDL")
+		return c.String(http.StatusOK, "SPMA APP API is running...")
 	})
 
 	TMP := e.Group("/TMP")
 
 	//NDL
-	TMP.GET("/template", template_controller.Template_Controller)
+	TMP.GET("/template", template_controller.Read_EXCEL_Controller)
 
 	return e
 }
