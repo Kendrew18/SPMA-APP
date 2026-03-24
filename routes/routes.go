@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"Template-golang/controller/template_controller"
+	"SPMA-APP/controller/template_controller"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -17,10 +17,22 @@ func Init() *echo.Echo {
 		return c.String(http.StatusOK, "SPMA APP API is running...")
 	})
 
-	TMP := e.Group("/TMP")
+	LWK := e.Group("/LWK")
 
-	//NDL
-	TMP.GET("/template", template_controller.Read_EXCEL_Controller)
+	//LWK PENGISIAN ITEM ITEM LWK
+	LWK.POST("/ITEM-LWK", template_controller.Read_EXCEL_Controller)
+
+	//Edit Item LWK
+
+	//Pengisian Policy (harga)
+
+	//Edit Policy (harga)
+
+	//Pengisian Policy (Bonusan)
+
+	//Edit Policy (Bonusan)
+
+	//PENGISIAN DSO
 
 	return e
 }

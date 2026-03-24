@@ -1,12 +1,12 @@
 package main
 
 import (
-	"Template-golang/db"
-	"Template-golang/routes"
+	"SPMA-APP/db"
+	"SPMA-APP/routes"
 )
 
 func main() {
-	db.Init()
+	db.DatabaseInit()
 	e := routes.Init()
 	e.Logger.Fatal(e.Start(":38600"))
 }

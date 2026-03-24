@@ -1,10 +1,9 @@
 package template_service
 
 import (
-	"Template-golang/db"
-	"Template-golang/model/request"
-	"Template-golang/model/response"
-	"fmt"
+	"SPMA-APP/db"
+	"SPMA-APP/model/request"
+	"SPMA-APP/model/response"
 	"net/http"
 	"strconv"
 )
@@ -12,41 +11,47 @@ import (
 func Template_Service(Requests []request.Request_Item_LWK) (response.Response, error) {
 
 	var res response.Response
+	var err error
 
 	factory_code := ""
 
-	con := db.CreateConGorm().Table("ITEM_LWK")
+	stat := 0
 
-	err := con.Select("factory_code").Where("factory_code = ?", Requests[0].Factory_code).Order("co ASC").Scan(&factory_code).Error
+	con := db.CreateConGorm().Table("item_lwk")
 
-	if factory_code == "" {
+	for i := 0; i < len(Requests); i++ {
+		err = con.Select("factory_code").Where("factory_code = ?", Requests[i].Factory_code).Order("co ASC").Scan(&factory_code).Error
+		if factory_code != "" {
+			stat = 1
+			break
+		}
+	}
 
-		fmt.Println(Requests[0])
+	if stat == 0 {
 
-		con := db.CreateConGorm().Table("BARANG")
+		con := db.CreateConGorm().Table("item_lwk")
 
 		co := 0
 
 		err := con.Select("co").Order("co DESC").Limit(1).Scan(&co)
-		for i := 1; i < 5; i++ {
-			fmt.Println("Angka", i)
+		for i := 0; i < len(Requests); i++ {
+			Requests[i].Co = co + 1 + i
+			Requests[i].Id_tipe_lwk = "LWK-" + strconv.Itoa(Requests[i].Co)
 		}
-		Requests[0].Co = co + 1
-		Requests[0].Id_tipe_lwk = "LWK-" + strconv.Itoa(Requests[0].Co)
 
 		if err.Error != nil {
 			res.Status = http.StatusNotFound
 			res.Message = "Status Not Found"
-			res.Data = Requests[0]
+			res.Data = Requests
 			return res, err.Error
 		}
 
-		err = con.Select("co", "id_tipe_lwk", "factory_code", "product_name_1", "product_name_2", "qty").Create(&Requests[0])
+		err = con.Select("co", "id_tipe_lwk", "factory_code", "product_name_1", "product_name_2", "qty").Create(&Requests)
 
 		if err.Error != nil {
 			res.Status = http.StatusNotFound
 			res.Message = "Status Not Found"
-			res.Data = Requests[0]
+			res.Data = Requests
 			return res, err.Error
 		} else {
 			res.Status = http.StatusOK

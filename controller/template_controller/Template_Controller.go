@@ -1,7 +1,8 @@
 package template_controller
 
 import (
-	"Template-golang/model/response"
+	"SPMA-APP/model/request"
+	"SPMA-APP/service/item_lwk_service"
 	"net/http"
 	"strconv"
 
@@ -56,7 +57,7 @@ func Read_EXCEL_Controller(c echo.Context) error {
 	}
 
 	// Ambil data dari Sheet1
-	var data []response.ResponseExcel
+	var data []request.Request_Item_LWK
 	for i, row := range rows {
 		// Lewati header jika ada
 		if i == 0 {
@@ -69,14 +70,20 @@ func Read_EXCEL_Controller(c echo.Context) error {
 		}
 
 		QTY, _ := strconv.Atoi(row[3]) // konversi string ke int
-		data = append(data, response.ResponseExcel{
-			PRODUCT_NAME_1: row[0],
-			PRODUCT_NAME_2: row[1],
-			FACTORY_CODE:   row[2],
-			QTY:            QTY,
+		data = append(data, request.Request_Item_LWK{
+			Product_name_1: row[0],
+			Product_name_2: row[1],
+			Factory_code:   row[2],
+			Qty:            QTY,
 		})
 	}
 
-	return c.JSON(http.StatusOK, data)
+	result, err := item_lwk_service.Item_Lwk_Service(data)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
+	}
+
+	return c.JSON(result.Status, result)
 
 }
