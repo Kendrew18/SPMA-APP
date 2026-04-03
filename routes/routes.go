@@ -1,7 +1,8 @@
 package routes
 
 import (
-	"SPMA-APP/controller/template_controller"
+	"SPMA-APP/controller/item_lwk_controller"
+	"SPMA-APP/controller/policy"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -18,13 +19,18 @@ func Init() *echo.Echo {
 	})
 
 	LWK := e.Group("/LWK")
+	PLC := e.Group("/PLC")
 
 	//LWK PENGISIAN ITEM ITEM LWK
-	LWK.POST("/ITEM-LWK", template_controller.Read_EXCEL_Controller)
+	LWK.POST("/ITEM-LWK", item_lwk_controller.Read_EXCEL_Controller)
+
+	//READ ITEM LWK
+	LWK.GET("/ITEM-LWK", item_lwk_controller.ReadItemLwk)
 
 	//Edit Item LWK
 
 	//Pengisian Policy (harga)
+	PLC.POST("/POLICY", policy.Input_EXCEL_Policy_Controller)
 
 	//Edit Policy (harga)
 

@@ -10,59 +10,88 @@ import (
 
 func Item_Lwk_Service(Requests []request.Request_Item_LWK) (response.Response, error) {
 	var res response.Response
+	con := db.DB().Table("item_lwk")
 
-	// Buat koneksi database sekali
-	con := db.CreateConGorm().Table("item_lwk")
+	// Check if factory code already exists
+	var factory_code string
 
-	// Ekstrak factory_codes dari requests untuk query batch
-	factoryCodes := make([]string, len(Requests))
-	for i, req := range Requests {
-		factoryCodes[i] = req.Factory_code
+	for i := 0; i < len(Requests); i++ {
+		err := con.Select("factory_code").Where("factory_code = ?", Requests[i].Factory_code).Order("co ASC").Scan(&factory_code).Error
+		if factory_code != "" && err == nil {
+			res.Status = http.StatusNotAcceptable
+			res.Message = "ada item yang telah terdaftar dengan factory code yang sama"
+			return res, nil
+		}
 	}
 
-	// Cek apakah ada factory_code yang sudah ada (query tunggal)
-	var existingCount int64
-	err := con.Where("factory_code IN ?", factoryCodes).Count(&existingCount).Error
-	if err != nil {
-		res.Status = http.StatusInternalServerError
-		res.Message = "Database error"
-		return res, err
-	}
-	if existingCount > 0 {
-		res.Status = http.StatusNotAcceptable
-		res.Message = "Ada item yang telah terdaftar dengan factory code yang sama"
-		return res, nil
-	}
-
-	// Jika tidak ada duplikat, lanjutkan insert
-	// Ambil nilai co terbesar
-	var maxCo int
-	err = con.Select("co").Order("co DESC").Limit(1).Scan(&maxCo).Error
-	if err != nil {
-		res.Status = http.StatusInternalServerError
-		res.Message = "Database error"
+	// Get the latest co value
+	var co int
+	if err := con.Select("co").Order("co DESC").Limit(1).Scan(&co).Error; err != nil {
+		res.Status = http.StatusNotFound
+		res.Message = "Status Not Found"
+		res.Data = Requests
 		return res, err
 	}
 
-	// Set Co dan Id_tipe_lwk untuk semua requests
-	for i := range Requests {
-		Requests[i].Co = maxCo + 1 + i
+	// Generate co and Id_tipe_lwk
+	err := con.Select("co").Order("co DESC").Limit(1).Scan(&co)
+
+	if err.Error != nil {
+		res.Status = http.StatusNotFound
+		res.Message = "Status Not Found"
+		res.Data = Requests
+		return res, err.Error
+	}
+
+	for i := 0; i < len(Requests); i++ {
+		Requests[i].Co = co + 1 + i
 		Requests[i].Id_tipe_lwk = "LWK-" + strconv.Itoa(Requests[i].Co)
 	}
 
-	// Insert batch
-	err = con.Select("co", "id_tipe_lwk", "factory_code", "product_name_1", "product_name_2", "qty").Create(&Requests).Error
+	con = db.DB().Table("item_lwk")
+
+	err = con.Select("co", "id_tipe_lwk", "factory_code", "product_name_1", "product_name_2", "qty").Create(&Requests)
+
+	if err.Error != nil {
+		res.Status = http.StatusNotFound
+		res.Message = "Status Not Found"
+		res.Data = Requests
+		return res, err.Error
+	} else {
+		res.Status = http.StatusOK
+		res.Message = "Suksess"
+		res.Data = map[string]int64{
+			"rows": err.RowsAffected,
+		}
+	}
+	return res, nil
+}
+
+func Read_Item_Lwk_Service() (response.Response, error) {
+	var res response.Response
+	var arr_invent []response.Response_Item_LWK
+
+	con := db.DB().Table("item_lwk")
+
+	err := con.Select("co", "id_tipe_lwk", "factory_code", "product_name_1", "product_name_2", "qty").Order("co ASC").Scan(&arr_invent).Error
+
 	if err != nil {
-		res.Status = http.StatusInternalServerError
-		res.Message = "Gagal insert data"
+		res.Status = http.StatusNotFound
+		res.Message = "Status Not Found"
+		res.Data = arr_invent
 		return res, err
 	}
 
-	// Respons sukses
-	res.Status = http.StatusOK
-	res.Message = "Sukses"
-	res.Data = map[string]int64{
-		"rows": int64(len(Requests)), // Asumsi semua berhasil, atau gunakan RowsAffected jika perlu
+	if arr_invent == nil {
+		res.Status = http.StatusNotFound
+		res.Message = "Status Not Found"
+		res.Data = arr_invent
+
+	} else {
+		res.Status = http.StatusOK
+		res.Message = "Suksess"
+		res.Data = arr_invent
 	}
+
 	return res, nil
 }

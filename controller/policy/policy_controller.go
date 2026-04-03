@@ -1,8 +1,8 @@
-package template_controller
+package policy
 
 import (
 	"SPMA-APP/model/request"
-	"SPMA-APP/service/item_lwk_service"
+	"SPMA-APP/service/policy"
 	"net/http"
 	"strconv"
 
@@ -10,21 +10,7 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-/*func Template_Controller(c echo.Context) error {
-	var Request request.Request
-	Request.Id = c.FormValue("id")
-	Request.Nama = c.FormValue("nama")
-
-	result, err := template_service.Template_Service(Request)
-
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
-	}
-
-	return c.JSON(result.Status, result)
-}*/
-
-func Read_EXCEL_Controller(c echo.Context) error {
+func Input_EXCEL_Policy_Controller(c echo.Context) error {
 	// Buka stream file
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -49,7 +35,7 @@ func Read_EXCEL_Controller(c echo.Context) error {
 		})
 	}
 
-	rows, err := f.GetRows("DTBS ITEM")
+	rows, err := f.GetRows("Sheet1")
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Gagal membaca sheet",
@@ -57,7 +43,7 @@ func Read_EXCEL_Controller(c echo.Context) error {
 	}
 
 	// Ambil data dari Sheet1
-	var data []request.Request_Item_LWK
+	var data []request.Request_Policy
 	for i, row := range rows {
 		// Lewati header jika ada
 		if i == 0 {
@@ -65,22 +51,26 @@ func Read_EXCEL_Controller(c echo.Context) error {
 		}
 
 		// Pastikan panjang row sesuai
-		if len(row) < 4 {
+		if len(row) < 5 {
 			continue
 		}
 
-		QTY, _ := strconv.Atoi(row[3]) // konversi string ke int
-		data = append(data, request.Request_Item_LWK{
-			Product_name_1: row[0],
-			Product_name_2: row[1],
-			Factory_code:   row[2],
-			Qty:            QTY,
+		strata, _ := strconv.Atoi(row[0]) // konversi string ke int
+		harga, _ := strconv.Atoi(row[2])  // konversi string ke int
+		data = append(data, request.Request_Policy{
+			Strata:         strata,
+			Nama_product:   row[1],
+			Harga:          harga,
+			Depo:           row[3],
+			Tanggal_update: row[4],
 		})
 	}
 
 	validRequests := data[1:]
 
-	result, err := item_lwk_service.Item_Lwk_Service(validRequests)
+	// fmt.Println(validRequests)
+
+	result, err := policy.Policy_Service(validRequests)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
