@@ -1,9 +1,8 @@
-package policy
+package lk
 
 import (
 	"SPMA-APP/model/request"
 	"SPMA-APP/service/policy"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -11,7 +10,7 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-func Input_EXCEL_Policy_Controller(c echo.Context) error {
+func Input_EXCEL_LK_Controller(c echo.Context) error {
 	// Buka stream file
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -44,7 +43,7 @@ func Input_EXCEL_Policy_Controller(c echo.Context) error {
 	}
 
 	// Ambil data dari Sheet1
-	var data []request.Request_Policy
+	var data []request.Request_LK
 	for i, row := range rows {
 		// Lewati header jika ada
 		if i == 0 {
@@ -58,7 +57,7 @@ func Input_EXCEL_Policy_Controller(c echo.Context) error {
 
 		strata, _ := strconv.Atoi(row[0]) // konversi string ke int
 		harga, _ := strconv.Atoi(row[2])  // konversi string ke int
-		data = append(data, request.Request_Policy{
+		data = append(data, request.Request_LK{
 			Strata:         strata,
 			Nama_product:   row[1],
 			Harga:          harga,
@@ -79,24 +78,4 @@ func Input_EXCEL_Policy_Controller(c echo.Context) error {
 
 	return c.JSON(result.Status, result)
 
-}
-
-func ReadPolicy(c echo.Context) error {
-	var Request request.Request_Policy_R
-
-	err := c.Bind(&Request)
-
-	fmt.Println(Request)
-
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
-	}
-
-	result, err := policy.Policy_R(Request)
-
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
-	}
-
-	return c.JSON(result.Status, result)
 }

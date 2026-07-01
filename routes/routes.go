@@ -32,13 +32,14 @@ func Init() *echo.Echo {
 	//Pengisian Policy (harga)
 	PLC.POST("/POLICY", policy.Input_EXCEL_Policy_Controller)
 
+	//READ Policy
+	PLC.GET("/POLICY", policy.ReadPolicy)
+
 	//Edit Policy (harga)
 
 	//Pengisian Policy (Bonusan)
 
 	//Edit Policy (Bonusan)
-
-	//PENGISIAN DSO
 
 	return e
 }
